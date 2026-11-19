@@ -1,0 +1,6 @@
+
+:root{--brand:#805A51;--ink:#070A0A;--craft:#CD9558;--serve:#A7D7FF;--care:#5AC7B7;--thread:#CFA7FF;--plus:#D9D9D9;--merch:#F185AF}
+button{cursor:pointer}
+.header .dropdown-panel{z-index:100}
+@media(max-width:900px){.nav-links.open{display:flex}}
+[data-demo-form] [role=status]{min-height:1.5em}
