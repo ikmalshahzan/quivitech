@@ -36,5 +36,8 @@ export default function ContentPage(){
   }
   return ()=>{controller.abort();ctx?.revert();ScrollTrigger.refresh()};
  },[pathname,page.title,page.description]);
- return <div ref={root} key={pathname}>{parse(page.html)}</div>;
+ const html = import.meta.env.MODE === 'pages'
+  ? page.html.replace(/href="(\/[^"/][^"]*)"/g, 'href="#$1"')
+  : page.html;
+ return <div ref={root} key={pathname}>{parse(html)}</div>;
 }
