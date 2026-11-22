@@ -652,8 +652,11 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
-.experience.section {
-  background: var(--white);
+.editorial-home .experience.section {
+  background-color: var(--white);
+  background-image: linear-gradient(to bottom, rgb(248 248 248 / var(--experience-dissolve, 1)), transparent);
+  background-size: 100% clamp(110px, 22vw, 260px);
+  background-repeat: no-repeat;
 }
 
 .eco-build { --eco-tone: #f5e6d7; }
@@ -1499,3 +1502,28 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--ink);
 }
 .craft-flip-actions .craft-guide-action:focus-visible { outline-color: var(--accent); }
+
+.serve-memberships .tier {
+  display: flex;
+  flex-direction: column;
+}
+
+.serve-kit-art {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 4 / 3;
+  margin: 16px 0 24px;
+}
+
+.serve-kit-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.serve-memberships .tier ul { margin-bottom: 20px; }
+.serve-memberships .tier > .round-btn {
+  width: 100%;
+  margin-top: auto;
+}

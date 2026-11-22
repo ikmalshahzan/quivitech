@@ -1,3 +1,4 @@
+import { SplitText } from 'gsap/SplitText';
 import Swiper from 'swiper';
 import { Navigation, Keyboard, Pagination, A11y } from 'swiper/modules';
 import 'swiper/css';
@@ -8,7 +9,7 @@ import {useLocation} from 'react-router-dom';
 import gsap from 'gsap';
 import {ScrollTrigger} from 'gsap/ScrollTrigger';
 import pages from '../pages/content.json';
-gsap.registerPlugin(ScrollTrigger);
+gsap.registerPlugin(ScrollTrigger, SplitText);
 const contentIcons = {Phone, Mail, Facebook, Instagram, Linkedin, Youtube, Cpu, Expand, Wind, ArrowUpRight, ArrowDownRight, ArrowDown, ArrowLeft, ArrowRight, Sparks, Star, Heart, Flash, ArrowSeparate};
 
 const contentOptions = {
@@ -199,7 +200,7 @@ export default function ContentPage(){
    journeyTimer = window.setTimeout(typeNext, 1300);
   }
 
-  let ctx, motion;
+  let ctx, motion, heroSplit;
   if(!reduced){
    const experience = node.querySelector('.experience-stage');
    if (experience) {
@@ -307,6 +308,31 @@ export default function ContentPage(){
    }
 
    ctx=gsap.context(()=>{
+    const experienceSection = node.querySelector('.editorial-home .experience.section');
+    if (experienceSection) {
+     gsap.fromTo(experienceSection, {'--experience-dissolve': 1}, {
+      '--experience-dissolve': 0,
+      ease: 'none',
+      scrollTrigger: {
+       trigger: experienceSection,
+       start: 'top bottom',
+       end: 'top 30%',
+       scrub: true,
+      },
+     });
+    }
+    const heroTitle = node.querySelector('.home-hero .hero-center h1');
+    if (heroTitle) {
+     heroSplit = SplitText.create(heroTitle, {type: 'words', mask: 'words'});
+     gsap.from(heroSplit.words, {
+      yPercent: 110,
+      delay: 0.55,
+      duration: 0.78,
+      stagger: 0.12,
+      ease: 'power3.out',
+      onComplete: () => heroSplit.revert(),
+     });
+    }
     const statement = node.querySelector('.journey-statement');
     if (statement) {
      const header = document.querySelector('.header');
@@ -341,7 +367,7 @@ export default function ContentPage(){
      }, transitionStart);
     }
 
-    gsap.from('.hero .kicker,.hero h1,.hero-aside,.hero-center .micro-label,.hero-center h1,.hero-center p',{y:40,autoAlpha:0,duration:1,stagger:.13,ease:'power3.out',clearProps:'all'});
+    gsap.from('.hero .kicker,.hero h1,.hero-aside,.hero-center .micro-label,.hero-center p',{y:40,autoAlpha:0,duration:1,stagger:.13,ease:'power3.out',clearProps:'all'});
     gsap.utils.toArray('[data-reveal]:not(.experience-card)').forEach(el=>gsap.from(el,{scrollTrigger:{trigger:el,start:'top 90%',once:true},autoAlpha:0,y:42,duration:.8,ease:'power2.out',clearProps:'all'}));
     gsap.utils.toArray('[data-stagger]').forEach(group=>gsap.from(group.children,{scrollTrigger:{trigger:group,start:'top 90%',once:true},autoAlpha:0,y:40,duration:.8,stagger:.1,ease:'power2.out',clearProps:'all'}));
     gsap.utils.toArray('.experience-art .kiwi').forEach(el=>gsap.to(el,{y:-12,rotation:8,duration:2.8,repeat:-1,yoyo:true,ease:'sine.inOut'}));
@@ -352,7 +378,7 @@ export default function ContentPage(){
     card.addEventListener('pointerleave',()=>card.style.transform='',{signal});
    });
   }
-  return ()=>{window.clearTimeout(journeyTimer);controller.abort();gallerySwiper?.destroy();ctx?.revert();motion?.revert();ScrollTrigger.refresh()};
+  return ()=>{window.clearTimeout(journeyTimer);controller.abort();gallerySwiper?.destroy();ctx?.revert();heroSplit?.revert();motion?.revert();ScrollTrigger.refresh()};
  },[pathname,page.title,page.description]);
  const html = import.meta.env.MODE === 'pages'
   ? page.html
