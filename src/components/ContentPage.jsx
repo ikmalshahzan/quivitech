@@ -1,8 +1,8 @@
 import { SplitText } from 'gsap/SplitText';
 import Swiper from 'swiper';
-import { Navigation, Keyboard, Pagination, A11y } from 'swiper/modules';
+import { Navigation, Pagination, A11y } from 'swiper/modules';
 import 'swiper/css';
-import { Phone, Mail, Facebook, Instagram, Linkedin, Youtube, Cpu, Expand, Wind, ArrowUpRight, ArrowDownRight, ArrowDown, ArrowLeft, ArrowRight, Sparks, Star, Heart, Flash, ArrowSeparate } from 'iconoir-react';
+import { Phone, Mail, Facebook, Instagram, Linkedin, Youtube, Cpu, Expand, Wind, ArrowUpRight, ArrowDownRight, ArrowDown, ArrowLeft, ArrowRight, Play, Pause, Sparks, Star, Heart, Flash, ArrowSeparate } from 'iconoir-react';
 import React,{useEffect,useRef} from 'react';
 import parse from 'html-react-parser';
 import {useLocation} from 'react-router-dom';
@@ -10,7 +10,7 @@ import gsap from 'gsap';
 import {ScrollTrigger} from 'gsap/ScrollTrigger';
 import pages from '../pages/content.json';
 gsap.registerPlugin(ScrollTrigger, SplitText);
-const contentIcons = {Phone, Mail, Facebook, Instagram, Linkedin, Youtube, Cpu, Expand, Wind, ArrowUpRight, ArrowDownRight, ArrowDown, ArrowLeft, ArrowRight, Sparks, Star, Heart, Flash, ArrowSeparate};
+const contentIcons = {Phone, Mail, Facebook, Instagram, Linkedin, Youtube, Cpu, Expand, Wind, ArrowUpRight, ArrowDownRight, ArrowDown, ArrowLeft, ArrowRight, Play, Pause, Sparks, Star, Heart, Flash, ArrowSeparate};
 
 const contentOptions = {
  replace: ({attribs}) => {
@@ -21,7 +21,7 @@ const contentOptions = {
  },
 };
 export default function ContentPage(){
- const {pathname}=useLocation();
+ const {pathname, search}=useLocation();
  const root=useRef(null);
  const page=pages[pathname]||pages['/'];
  useEffect(()=>{
@@ -34,6 +34,19 @@ export default function ContentPage(){
   node.querySelectorAll('.faq-trigger').forEach(btn=>btn.addEventListener('click',()=>btn.setAttribute('aria-expanded',String(btn.getAttribute('aria-expanded')!=='true')),{signal}));
   node.querySelectorAll('.slider input').forEach(input=>input.addEventListener('input',e=>e.target.closest('.slider').style.setProperty('--split',e.target.value+'%'),{signal}));
   node.querySelectorAll('[data-demo-form]').forEach(form=>form.addEventListener('submit',e=>{e.preventDefault();const status=form.querySelector('.form-error');if(status)status.textContent='Your enquiry could not be sent. Please try again later.'},{signal}));
+  const enquiryService = node.querySelector('#quote-request select[name="service"]');
+  if (enquiryService) {
+   const budget = node.querySelector('.contact-budget');
+   const syncBudget = () => {
+    const isBuild = enquiryService.value === 'custom-pc';
+    budget.hidden = !isBuild;
+    budget.querySelector('input').disabled = !isBuild;
+   };
+   if (new URLSearchParams(search).get('service') === 'custom-pc') enquiryService.value = 'custom-pc';
+   syncBudget();
+   enquiryService.addEventListener('change', syncBudget, {signal});
+  }
+
   const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const reviewTrack = node.querySelector('.review-slider .review-grid');
   if (reviewTrack) {
@@ -63,47 +76,87 @@ export default function ContentPage(){
    video.muted = true;
    video.play().catch(() => {});
   }
-  const photoGallery = node.querySelector('.build-showcase-gallery');
-  const photoViewer = node.querySelector('.build-photo-viewer');
-  let gallerySwiper;
-  if (photoGallery && photoViewer && typeof photoViewer.showModal === 'function') {
-   const thumbnails = Array.from(photoGallery.querySelectorAll('a'));
-   const carousel = photoViewer.querySelector('.swiper');
-   const slides = thumbnails.map(link => {
-    const slide = document.createElement('div');
-    slide.className = 'swiper-slide';
-    const image = link.querySelector('img').cloneNode();
-    slide.append(image);
-    return slide;
-   });
-   carousel.querySelector('.swiper-wrapper').replaceChildren(...slides);
-   photoGallery.addEventListener('click', event => {
-    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-    const index = thumbnails.indexOf(event.target.closest('a'));
-    if (index === -1) return;
-    event.preventDefault();
-    gallerySwiper?.destroy();
-    photoViewer.showModal();
-    gallerySwiper = new Swiper(carousel, {
-     modules: [Navigation, Keyboard, Pagination, A11y],
-     initialSlide: index,
-     speed: reduced ? 0 : 300,
-     navigation: {
-      prevEl: photoViewer.querySelector('.build-photo-prev'),
-      nextEl: photoViewer.querySelector('.build-photo-next'),
-     },
-     keyboard: {enabled: true},
-     pagination: {el: photoViewer.querySelector('.build-photo-count'), type: 'fraction'},
+  const heroGallery = node.querySelector('.frostbyte-hero-gallery');
+  const heroGallerySwiper = heroGallery ? new Swiper(heroGallery.querySelector('.swiper'), {
+   modules: [Navigation, Pagination, A11y],
+   speed: reduced ? 0 : 350,
+   rewind: true,
+   navigation: {
+    prevEl: heroGallery.querySelector('.frostbyte-photo-prev'),
+    nextEl: heroGallery.querySelector('.frostbyte-photo-next'),
+   },
+   pagination: {el: heroGallery.querySelector('.frostbyte-photo-count'), type: 'fraction'},
+   a11y: {prevSlideMessage: 'Previous photo', nextSlideMessage: 'Next photo'},
+  }) : undefined;
+
+  const showcase = node.querySelector('.frostbyte-showcase');
+  let showcaseSwiper;
+  let stopShowcase;
+  if (showcase) {
+   const videos = Array.from(showcase.querySelectorAll('video'));
+   const playback = showcase.querySelector('.frostbyte-playback');
+   let playing = !reduced;
+   let inView = false;
+
+   const syncVideos = () => {
+    const activeIndex = showcaseSwiper.activeIndex;
+    videos.forEach((clip, index) => {
+     if (index === activeIndex && playing && inView && !document.hidden) {
+      clip.play().catch(() => {});
+     } else {
+      clip.pause();
+     }
     });
+   };
+
+   const syncPlaybackControl = () => {
+    playback.setAttribute('aria-label', playing ? 'Pause clips' : 'Play clips');
+    playback.classList.toggle('is-paused', !playing);
+   };
+
+   showcaseSwiper = new Swiper(showcase.querySelector('.swiper'), {
+    modules: [Navigation, Pagination, A11y],
+    speed: reduced ? 0 : 450,
+    rewind: true,
+    navigation: {
+     prevEl: showcase.querySelector('.frostbyte-prev'),
+     nextEl: showcase.querySelector('.frostbyte-next'),
+    },
+    pagination: {el: showcase.querySelector('.frostbyte-progress'), type: 'fraction'},
+    a11y: {prevSlideMessage: 'Previous clip', nextSlideMessage: 'Next clip'},
+   });
+   showcaseSwiper.on('slideChange', () => {
+    const previous = videos[showcaseSwiper.previousIndex];
+    if (previous?.currentTime) previous.currentTime = 0;
+    syncVideos();
+   });
+   videos.forEach((clip, index) => {
+    clip.addEventListener('ended', () => {
+     if (playing && inView && showcaseSwiper.activeIndex === index) showcaseSwiper.slideNext();
+    }, {signal});
+    clip.addEventListener('error', () => {
+     if (showcaseSwiper.activeIndex === index) {
+      playing = false;
+      syncPlaybackControl();
+     }
+    }, {signal});
+   });
+   playback.addEventListener('click', () => {
+    playing = !playing;
+    syncPlaybackControl();
+    syncVideos();
    }, {signal});
-   photoViewer.addEventListener('click', event => {
-    if (event.target === photoViewer) photoViewer.close();
-   }, {signal});
-   photoViewer.addEventListener('close', () => {
-    if (photoViewer.open) return;
-    gallerySwiper?.destroy();
-    gallerySwiper = undefined;
-   }, {signal});
+   document.addEventListener('visibilitychange', syncVideos, {signal});
+   const observer = new IntersectionObserver(([entry]) => {
+    inView = entry.intersectionRatio >= 0.25;
+    syncVideos();
+   }, {threshold: 0.25});
+   observer.observe(showcase);
+   syncPlaybackControl();
+   stopShowcase = () => {
+    observer.disconnect();
+    videos.forEach(clip => clip.pause());
+   };
   }
 
   const merchFilters = Array.from(node.querySelectorAll('[data-merch-filter]'));
@@ -250,7 +303,7 @@ export default function ContentPage(){
    const ecosystem = node.querySelector('.home-ecosystem');
    if (ecosystem) {
     motion ??= gsap.matchMedia();
-    motion.add('(min-height: 560px)', () => {
+    motion.add('(min-width: 801px) and (min-height: 560px)', () => {
      const viewport = ecosystem.querySelector('.eco-viewport');
      const track = viewport.querySelector('.eco-grid');
      const header = document.querySelector('.header');
@@ -341,7 +394,7 @@ export default function ContentPage(){
       scrollTrigger: {
        trigger: section,
        start: () => `top ${header.offsetHeight}px`,
-       end: () => `+=${Math.round(window.innerHeight * 1.4)}`,
+       end: () => `+=${Math.round(window.innerHeight * 0.85)}`,
        pin: true,
        scrub: true,
        refreshPriority: 2,
@@ -378,8 +431,8 @@ export default function ContentPage(){
     card.addEventListener('pointerleave',()=>card.style.transform='',{signal});
    });
   }
-  return ()=>{window.clearTimeout(journeyTimer);controller.abort();gallerySwiper?.destroy();ctx?.revert();heroSplit?.revert();motion?.revert();ScrollTrigger.refresh()};
- },[pathname,page.title,page.description]);
+  return ()=>{window.clearTimeout(journeyTimer);controller.abort();heroGallerySwiper?.destroy();stopShowcase?.();showcaseSwiper?.destroy();ctx?.revert();heroSplit?.revert();motion?.revert();ScrollTrigger.refresh()};
+ },[pathname,search,page.title,page.description]);
  const html = import.meta.env.MODE === 'pages'
   ? page.html
    .replace(/href="(\/[^"/][^"]*)"/g, (_, href) => {
