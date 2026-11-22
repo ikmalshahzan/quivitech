@@ -5,5 +5,6 @@ import Layout from './components/Layout';
 import ContentPage from './components/ContentPage';
 import './styles/site.css';
 import './styles/react.css';
+import './styles/buttons.css';
 const Router = import.meta.env.MODE === 'pages' ? HashRouter : BrowserRouter;
 createRoot(document.getElementById('root')).render(<React.StrictMode><Router><Routes><Route element={<Layout/>}><Route path="*" element={<ContentPage/>}/></Route></Routes></Router></React.StrictMode>);

@@ -1,0 +1,144 @@
+:root {
+  --action-height: 48px;
+  --control-height: 44px;
+  --action-padding: 22px;
+  --action-gap: 8px;
+  --action-radius: 999px;
+  --action-text: 14px;
+  --action-weight: 700;
+  --action-border: #c9c7c3;
+  --action-hover: #68483f;
+  --action-soft: #f5efec;
+}
+
+.round-btn,
+.merch-filters button,
+.review-controls button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--action-gap);
+  border: 1px solid var(--action-border);
+  border-radius: var(--action-radius);
+  font-family: "DM Sans", sans-serif;
+  font-size: var(--action-text);
+  font-weight: var(--action-weight);
+  line-height: 1.25;
+  text-align: center;
+  transition: background-color .2s ease, color .2s ease, border-color .2s ease;
+}
+
+.round-btn {
+  min-height: var(--action-height);
+  padding: 10px var(--action-padding);
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--white);
+}
+
+.round-btn:hover {
+  background: var(--action-hover);
+  border-color: var(--action-hover);
+}
+
+.round-btn.outline,
+.merch-filters button,
+.review-controls button {
+  background: var(--white);
+  color: var(--ink);
+}
+.round-btn.outline { border-color: var(--action-border); }
+.round-btn.outline:hover,
+.merch-filters button:not([aria-pressed="true"]):hover,
+.review-controls button:not(:disabled):hover {
+  background: var(--action-soft);
+  border-color: var(--accent);
+}
+
+.merch-filters button,
+.review-controls button { min-height: var(--control-height); }
+.merch-filters button { padding: 8px 16px; }
+.merch-filters button[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--white);
+}
+.review-controls button {
+  width: var(--control-height);
+  padding: 0;
+}
+.review-controls button:disabled { opacity: .45; cursor: default; }
+
+.text-link,
+.craft-guide-action,
+.eco-copy b,
+.merch-image-action {
+  font-family: "DM Sans", sans-serif;
+  font-size: var(--action-text);
+  font-weight: var(--action-weight);
+  line-height: 1.35;
+}
+.text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--action-gap);
+}
+.text-link:hover { color: var(--accent); }
+.round-btn .content-icon,
+.text-link .content-icon,
+.eco-copy b .content-icon,
+.merch-image-action .content-icon { width: 1em; height: 1em; }
+.review-controls .content-icon { width: 20px; height: 20px; }
+
+:is(.round-btn, .text-link, .merch-filters button, .review-controls button, .header-tab, .hamburger, .faq-trigger, .craft-guide-topics button):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 800px) {
+  .header .header-contact { padding-inline: 14px; }
+  .header .hamburger { width: var(--control-height); height: var(--control-height); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .round-btn, .merch-filters button, .review-controls button { transition: none; }
+}
+
+
+:is(.text-link, .craft-guide-action:not(:has(.craft-flip-link-label)), .eco-copy b, .merch-image-action, .craft-flip-link-label) {
+  position: relative;
+}
+
+:is(.text-link, .craft-guide-action:not(:has(.craft-flip-link-label)), .eco-copy b, .merch-image-action, .craft-flip-link-label)::after {
+  position: absolute;
+  inset: calc(50% + .6em) 0 auto;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform .28s ease;
+  pointer-events: none;
+  content: "";
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :is(.text-link, .craft-guide-action:not(:has(.craft-flip-link-label)), .eco-copy b, .merch-image-action, .craft-flip-link-label):hover::after,
+  .craft-flip-actions .craft-guide-action:hover .craft-flip-link-label::after {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.text-link, .craft-guide-action:not(:has(.craft-flip-link-label)), .eco-copy b, .merch-image-action, .craft-flip-link-label)::after { transition: none; }
+  .craft-guide-topics button::after { transition: none; }
+}
+
+.craft-flip-link-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--action-gap);
+  line-height: 1.25;
+}
+
+.craft-flip-actions .craft-flip-link-label::after {
+  inset: auto 0 1px;
+}

@@ -1,4 +1,4 @@
-import { Facebook, Instagram, Linkedin, Menu, Youtube } from 'iconoir-react';
+import { Facebook, Instagram, Linkedin, Youtube } from 'iconoir-react';
 import quiviLogo from '../quivitech-logo.png';
 import React,{useState} from 'react';
 import {Link,Outlet,useLocation} from 'react-router-dom';
@@ -9,6 +9,22 @@ export default function Layout(){
  const [headerHovered, setHeaderHovered] = useState(false);
  const [headerOpen, setHeaderOpen] = useState(false);
  const headerRevealed = headerHovered || headerOpen;
+ const headerTab = React.useRef(null);
+ const mobileMenuButton = React.useRef(null);
+ const toggleHeaderTab = () => {
+  if (window.matchMedia('(max-width: 800px)').matches) {
+   setMenu(true);
+   requestAnimationFrame(() => mobileMenuButton.current?.focus());
+   return;
+  }
+  setHeaderOpen(open => !open);
+ };
+ const toggleMobileMenu = () => {
+  setMenu(!menu);
+  if (menu && headerHidden) {
+   requestAnimationFrame(() => headerTab.current?.focus());
+  }
+ };
 
  React.useEffect(() => {
   let anchor = window.scrollY;
@@ -57,6 +73,8 @@ export default function Layout(){
    '#ecosystem': 'ecosystem',
    '#experience': 'experience',
    '#quote-request': 'quote-request',
+   '#page-content': 'page-content',
+   '#merch-collection': 'merch-collection',
   };
   const id = sections[location.hash];
   if (!id) {
@@ -77,23 +95,25 @@ export default function Layout(){
  }, [location.key, location.hash]);
 
  return <><a href="#main" className="skip">Skip to content</a><header
-  className={`header${location.pathname === '/' && headerAtTop ? ' header-over-hero' : ''}${headerHidden ? ' header-collapsed' : ''}${headerRevealed || menu ? ' header-revealed' : ''}`}
+  className={`header${location.pathname === '/' && headerAtTop ? ' header-over-hero' : ''}${headerHidden ? ' header-collapsed' : ''}${headerRevealed || menu ? ' header-revealed' : ''}${menu ? ' header-menu-open' : ''}`}
   onPointerLeave={() => setHeaderHovered(false)}
   onKeyDown={event => {
    if (event.key !== 'Escape') return;
    setHeaderOpen(false);
    setHeaderHovered(false);
    setMenu(false);
+   if (menu && headerHidden) requestAnimationFrame(() => headerTab.current?.focus());
   }}
  ><div className="header-drawer">
  <button
+  ref={headerTab}
   className="header-tab"
   type="button"
   aria-label="Toggle site header"
   aria-controls="header-content"
   aria-expanded={headerRevealed || menu}
   onPointerEnter={event => { if (event.pointerType === 'mouse') setHeaderHovered(true); }}
-  onClick={() => setHeaderOpen(open => !open)}
+  onClick={toggleHeaderTab}
  ><span className="header-tab-icon" aria-hidden="true"></span></button>
  <div className="nav" id="header-content">
  <Link className="logo" to="/" aria-label="QuiviTech homepage"><img className="brand-logo" src={quiviLogo} alt="" /></Link>
@@ -103,7 +123,7 @@ export default function Layout(){
   <Link to="/#experience">Experience</Link>
   </nav>
  <Link className="round-btn header-contact" to="/contact">Contact Us</Link>
- <button className="hamburger" aria-expanded={menu} aria-controls="primary-nav" aria-label="Toggle navigation" onClick={()=>setMenu(v=>!v)}><Menu className="content-icon" aria-hidden="true" focusable="false" /></button>
+ <button ref={mobileMenuButton} className="hamburger" aria-expanded={menu} aria-controls="primary-nav" aria-label={menu ? "Close navigation" : "Open navigation"} onClick={toggleMobileMenu}><span className="mobile-menu-icon" aria-hidden="true"><span></span><span></span><span></span></span></button>
  </div></div></header><Outlet/><footer className="site-footer">
   <div className="footer-art">
    <Link className="logo" to="/" aria-label="QuiviTech homepage">
@@ -115,6 +135,7 @@ export default function Layout(){
      <Link to="/quivicraft">Overview</Link>
      <Link to="/quivicraft/details">QuiviCraft</Link>
      <Link to="/quivicraft/serve">QuiviServe</Link>
+     <Link to="/quivicraft/care">QuiviCare</Link>
      <Link to="/quivicraft/thread">QuiviThread</Link>
      <Link to="/quiviplus">QuiviPlus</Link>
      <Link to="/quivimerch">QuiviMerch</Link>

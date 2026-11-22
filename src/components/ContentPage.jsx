@@ -1,4 +1,7 @@
-import { ArrowUpRight, ArrowDownRight, ArrowDown, ArrowLeft, ArrowRight, Sparks, Star, Heart, Flash, ArrowSeparate } from 'iconoir-react';
+import Swiper from 'swiper';
+import { Navigation, Keyboard, Pagination, A11y } from 'swiper/modules';
+import 'swiper/css';
+import { Phone, Mail, Facebook, Instagram, Linkedin, Youtube, Cpu, Expand, Wind, ArrowUpRight, ArrowDownRight, ArrowDown, ArrowLeft, ArrowRight, Sparks, Star, Heart, Flash, ArrowSeparate } from 'iconoir-react';
 import React,{useEffect,useRef} from 'react';
 import parse from 'html-react-parser';
 import {useLocation} from 'react-router-dom';
@@ -6,7 +9,7 @@ import gsap from 'gsap';
 import {ScrollTrigger} from 'gsap/ScrollTrigger';
 import pages from '../pages/content.json';
 gsap.registerPlugin(ScrollTrigger);
-const contentIcons = {ArrowUpRight, ArrowDownRight, ArrowDown, ArrowLeft, ArrowRight, Sparks, Star, Heart, Flash, ArrowSeparate};
+const contentIcons = {Phone, Mail, Facebook, Instagram, Linkedin, Youtube, Cpu, Expand, Wind, ArrowUpRight, ArrowDownRight, ArrowDown, ArrowLeft, ArrowRight, Sparks, Star, Heart, Flash, ArrowSeparate};
 
 const contentOptions = {
  replace: ({attribs}) => {
@@ -29,7 +32,7 @@ export default function ContentPage(){
   const controller=new AbortController(),signal=controller.signal;
   node.querySelectorAll('.faq-trigger').forEach(btn=>btn.addEventListener('click',()=>btn.setAttribute('aria-expanded',String(btn.getAttribute('aria-expanded')!=='true')),{signal}));
   node.querySelectorAll('.slider input').forEach(input=>input.addEventListener('input',e=>e.target.closest('.slider').style.setProperty('--split',e.target.value+'%'),{signal}));
-  node.querySelectorAll('[data-demo-form]').forEach(form=>form.addEventListener('submit',e=>{e.preventDefault();const status=form.querySelector('[role="status"]');if(status)status.textContent='Demo only: connect this form to your preferred email or CRM before launch.'},{signal}));
+  node.querySelectorAll('[data-demo-form]').forEach(form=>form.addEventListener('submit',e=>{e.preventDefault();const status=form.querySelector('.form-error');if(status)status.textContent='Your enquiry could not be sent. Please try again later.'},{signal}));
   const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const reviewTrack = node.querySelector('.review-slider .review-grid');
   if (reviewTrack) {
@@ -54,11 +57,122 @@ export default function ContentPage(){
    updateControls();
   }
 
-  const video = node.querySelector('.hero-video');
+  const video = node.querySelector('.hero-video, .merch-hero-video');
   if (video && !reduced) {
    video.muted = true;
    video.play().catch(() => {});
   }
+  const photoGallery = node.querySelector('.build-showcase-gallery');
+  const photoViewer = node.querySelector('.build-photo-viewer');
+  let gallerySwiper;
+  if (photoGallery && photoViewer && typeof photoViewer.showModal === 'function') {
+   const thumbnails = Array.from(photoGallery.querySelectorAll('a'));
+   const carousel = photoViewer.querySelector('.swiper');
+   const slides = thumbnails.map(link => {
+    const slide = document.createElement('div');
+    slide.className = 'swiper-slide';
+    const image = link.querySelector('img').cloneNode();
+    slide.append(image);
+    return slide;
+   });
+   carousel.querySelector('.swiper-wrapper').replaceChildren(...slides);
+   photoGallery.addEventListener('click', event => {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    const index = thumbnails.indexOf(event.target.closest('a'));
+    if (index === -1) return;
+    event.preventDefault();
+    gallerySwiper?.destroy();
+    photoViewer.showModal();
+    gallerySwiper = new Swiper(carousel, {
+     modules: [Navigation, Keyboard, Pagination, A11y],
+     initialSlide: index,
+     speed: reduced ? 0 : 300,
+     navigation: {
+      prevEl: photoViewer.querySelector('.build-photo-prev'),
+      nextEl: photoViewer.querySelector('.build-photo-next'),
+     },
+     keyboard: {enabled: true},
+     pagination: {el: photoViewer.querySelector('.build-photo-count'), type: 'fraction'},
+    });
+   }, {signal});
+   photoViewer.addEventListener('click', event => {
+    if (event.target === photoViewer) photoViewer.close();
+   }, {signal});
+   photoViewer.addEventListener('close', () => {
+    if (photoViewer.open) return;
+    gallerySwiper?.destroy();
+    gallerySwiper = undefined;
+   }, {signal});
+  }
+
+  const merchFilters = Array.from(node.querySelectorAll('[data-merch-filter]'));
+  const merchItems = Array.from(node.querySelectorAll('[data-merch-category]'));
+  merchFilters.forEach(filter => {
+   filter.addEventListener('click', () => {
+    const category = filter.dataset.merchFilter;
+    merchFilters.forEach(button => button.setAttribute('aria-pressed', String(button === filter)));
+    merchItems.forEach(item => { item.hidden = category !== 'all' && item.dataset.merchCategory !== category; });
+   }, {signal});
+  });
+
+  const guide = node.querySelector('.craft-guide');
+  if (guide) {
+   const tabs = Array.from(guide.querySelectorAll('[role="tab"]'));
+   const panels = tabs.map(tab => guide.querySelector('#' + tab.getAttribute('aria-controls')));
+   const select = (index, focus = false) => {
+    tabs.forEach((tab, position) => {
+     const active = position === index;
+     tab.setAttribute('aria-selected', String(active));
+     tab.tabIndex = active ? 0 : -1;
+     panels[position].hidden = !active;
+    });
+    if (focus) tabs[index].focus();
+   };
+   tabs.forEach((tab, index) => {
+    tab.addEventListener('pointerenter', event => {
+     if (event.pointerType === 'mouse' && window.matchMedia('(any-hover: hover)').matches) select(index);
+    }, {signal});
+    tab.addEventListener('click', () => select(index), {signal});
+    tab.addEventListener('keydown', event => {
+     const target = {
+      ArrowUp: (index + tabs.length - 1) % tabs.length,
+      ArrowDown: (index + 1) % tabs.length,
+      Home: 0,
+      End: tabs.length - 1,
+     }[event.key];
+     if (target === undefined) return;
+     event.preventDefault();
+     select(target, true);
+    }, {signal});
+   });
+  }
+
+  node.querySelectorAll('.craft-flip').forEach(card => {
+   const front = card.querySelector('.craft-flip-front');
+   const back = card.querySelector('.craft-flip-back');
+   const open = front.querySelector('button');
+   const close = back.querySelector('button');
+   const hover = window.matchMedia('(hover: hover) and (pointer: fine)');
+   const flip = (show, focusTarget) => {
+    card.classList.toggle('is-flipped', show);
+    open.setAttribute('aria-expanded', String(show));
+    front.inert = show;
+    back.inert = !show;
+    focusTarget?.focus({preventScroll: true});
+   };
+   open.addEventListener('click', () => flip(true, close), {signal});
+   close.addEventListener('click', () => flip(false, open), {signal});
+   card.addEventListener('pointerenter', event => {
+    if (hover.matches && event.pointerType === 'mouse' && !front.contains(document.activeElement)) flip(true);
+   }, {signal});
+   card.addEventListener('pointerleave', event => {
+    if (event.pointerType === 'mouse' && !back.contains(document.activeElement)) flip(false);
+   }, {signal});
+   card.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && card.classList.contains('is-flipped')) flip(false, open);
+   }, {signal});
+  });
+
   const journeyWord = node.querySelector('.journey-word');
   let journeyTimer;
   if (journeyWord && !reduced) {
@@ -238,11 +352,15 @@ export default function ContentPage(){
     card.addEventListener('pointerleave',()=>card.style.transform='',{signal});
    });
   }
-  return ()=>{window.clearTimeout(journeyTimer);controller.abort();ctx?.revert();motion?.revert();ScrollTrigger.refresh()};
+  return ()=>{window.clearTimeout(journeyTimer);controller.abort();gallerySwiper?.destroy();ctx?.revert();motion?.revert();ScrollTrigger.refresh()};
  },[pathname,page.title,page.description]);
  const html = import.meta.env.MODE === 'pages'
   ? page.html
-   .replace(/href="(\/[^"/][^"]*)"/g, 'href="#$1"')
+   .replace(/href="(\/[^"/][^"]*)"/g, (_, href) => {
+    const path = href.split(/[?#]/, 1)[0];
+    return /\.[a-z0-9]+$/i.test(path) ? `href=".${href}"` : `href="#${href}"`;
+   })
+   .replace(/href="#([a-z][\w-]*)"/gi, (_, anchor) => `href="#${pathname}#${anchor}"`)
    .replace(/(src|poster)="\/([^"/][^"]*)"/g, '$1="./$2"')
   : page.html;
  return <div ref={root} key={pathname}>{parse(html, contentOptions)}</div>;
